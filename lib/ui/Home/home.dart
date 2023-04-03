@@ -136,13 +136,9 @@ class _HomeUIState extends State<HomeUI> {
     return isRunning
         ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             ButtonWidget(
-                text: isRunning ? 'Pause' : 'Resume',
+                text: 'Pause',
                 onClicked: () {
-                  if (isRunning) {
-                    stopTimer(reset: false);
-                  } else {
-                    startTimer();
-                  }
+                  stopTimer(reset: false);
                 }),
             const SizedBox(
               width: 12,
