@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:simple_pomodoro/core/db/pomodoro_db.dart';
+import 'package:simple_pomodoro/core/utils/button_widget.dart';
 import 'package:simple_pomodoro/core/utils/theme.dart';
 import 'package:simple_pomodoro/models/event_type.dart';
 
@@ -17,32 +18,45 @@ class _HomeUIState extends State<HomeUI> {
   Timer? countDownTimer;
   Duration pomodoroDuration = Duration(minutes: pomodoroTime);
 
-  late List<EventType> types;
+  List<EventType> types = [];
 
   @override
   void initState() {
-    startTimer();
     super.initState();
-
     getTypes();
   }
 
   Future getTypes() async {
     types = await PomodoroDatabase.instance.readAllTypes();
-    int x = 0;
   }
 
-  void startTimer() {
+  void startTimer({bool reset = true}) {
+    if (reset) {
+      resetTimer();
+    }
     countDownTimer =
         Timer.periodic(const Duration(seconds: 1), (_) => setCountDown());
   }
+
+  void stopTimer({bool reset = true}) {
+    if (reset) {
+      resetTimer();
+    }
+    setState(() {
+      countDownTimer!.cancel();
+    });
+  }
+
+  void resetTimer() => setState(() {
+        pomodoroDuration = Duration(minutes: pomodoroTime);
+      });
 
   void setCountDown() {
     const reduceSecondBy = 1;
     setState(() {
       final seconds = pomodoroDuration.inSeconds - reduceSecondBy;
       if (seconds < 0) {
-        countDownTimer!.cancel();
+        stopTimer(reset: false);
       } else {
         pomodoroDuration = Duration(seconds: seconds);
       }
@@ -55,16 +69,26 @@ class _HomeUIState extends State<HomeUI> {
     final minutes = strDigits(pomodoroDuration.inMinutes);
     final seconds = strDigits(pomodoroDuration.inSeconds.remainder(60));
     return Column(mainAxisAlignment: MainAxisAlignment.start, children: [
-      ListView.builder(
-        shrinkWrap: true,
-        itemCount: types.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            leading: const Icon(Icons.list),
-            title: Text(types[index].name),
-          );
-        },
+      SafeArea(
+        child: GestureDetector(
+          onTap: () {
+            const snackBar = SnackBar(content: Text('Tap'));
+            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          },
+          child: Wrap(
+            children: [
+              for (var item in types)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Chip(
+                    label: Text(item.name),
+                  ),
+                )
+            ],
+          ),
+        ),
       ),
+      const SizedBox(height: 100),
       SizedBox(
         width: 300,
         height: 300,
@@ -100,12 +124,39 @@ class _HomeUIState extends State<HomeUI> {
           ],
         ),
       ),
+      const SizedBox(
+        height: 50,
+      ),
+      buildButtons()
     ]);
   }
 
-  Widget buildCard() => Container(
-        width: 100,
-        height: 200,
-        color: Colors.red,
-      );
+  Widget buildButtons() {
+    final isRunning = countDownTimer == null ? false : countDownTimer!.isActive;
+    return isRunning
+        ? Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            ButtonWidget(
+                text: isRunning ? 'Pause' : 'Resume',
+                onClicked: () {
+                  if (isRunning) {
+                    stopTimer(reset: false);
+                  } else {
+                    startTimer();
+                  }
+                }),
+            const SizedBox(
+              width: 12,
+            ),
+            ButtonWidget(
+                text: 'Cancel',
+                onClicked: () {
+                  stopTimer(reset: true);
+                })
+          ])
+        : ButtonWidget(
+            text: 'Start Timer!',
+            onClicked: () {
+              startTimer(reset: false);
+            });
+  }
 }

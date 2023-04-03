@@ -58,32 +58,35 @@ class _MyHomePageState extends State<MyHomePage> {
         body: Center(
           child: _pages.elementAt(_selectedIndex),
         ),
-        bottomNavigationBar: SafeArea(
-            child: Container(
-                padding: const EdgeInsets.fromLTRB(12, 3, 12, 3),
-                margin: const EdgeInsets.symmetric(horizontal: 24),
-                decoration: const BoxDecoration(
-                    color: CustomColor.logoBlue,
-                    borderRadius: BorderRadius.all(Radius.circular(24))),
-                child: BottomNavigationBar(
-                  elevation: 0,
-                  backgroundColor: CustomColor.logoBlue,
-                  iconSize: 32,
-                  currentIndex: _selectedIndex,
-                  selectedFontSize: 18,
-                  selectedIconTheme:
-                      const IconThemeData(color: Colors.amberAccent, size: 40),
-                  selectedItemColor: Colors.amberAccent,
-                  unselectedItemColor: CustomColor.white,
-                  onTap: _onItemTapped,
-                  items: const <BottomNavigationBarItem>[
-                    BottomNavigationBarItem(
-                        icon: Icon(Icons.home), label: 'Home'),
-                    BottomNavigationBarItem(
-                        icon: Icon(Icons.report), label: 'Report'),
-                    BottomNavigationBarItem(
-                        icon: Icon(Icons.settings), label: 'Settings'),
-                  ],
-                ))));
+        bottomNavigationBar: Padding(
+          padding: EdgeInsets.only(bottom: 10),
+          child: SafeArea(
+              child: Container(
+                  padding: const EdgeInsets.fromLTRB(12, 3, 12, 3),
+                  margin: const EdgeInsets.symmetric(horizontal: 24),
+                  decoration: const BoxDecoration(
+                      color: CustomColor.logoBlue,
+                      borderRadius: BorderRadius.all(Radius.circular(24))),
+                  child: BottomNavigationBar(
+                    elevation: 0,
+                    backgroundColor: CustomColor.logoBlue,
+                    iconSize: 32,
+                    currentIndex: _selectedIndex,
+                    selectedFontSize: 18,
+                    selectedIconTheme: const IconThemeData(
+                        color: Colors.amberAccent, size: 40),
+                    selectedItemColor: Colors.amberAccent,
+                    unselectedItemColor: CustomColor.white,
+                    onTap: _onItemTapped,
+                    items: const <BottomNavigationBarItem>[
+                      BottomNavigationBarItem(
+                          icon: Icon(Icons.home), label: 'Home'),
+                      BottomNavigationBarItem(
+                          icon: Icon(Icons.report), label: 'Report'),
+                      BottomNavigationBarItem(
+                          icon: Icon(Icons.settings), label: 'Settings'),
+                    ],
+                  ))),
+        ));
   }
 }
