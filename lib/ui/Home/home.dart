@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:simple_pomodoro/core/db/pomodoro_db.dart';
 import 'package:simple_pomodoro/core/utils/button_widget.dart';
 import 'package:simple_pomodoro/core/utils/theme.dart';
@@ -13,12 +14,14 @@ class HomeUI extends StatefulWidget {
 }
 
 class _HomeUIState extends State<HomeUI> {
-  static int pomodoroTime = 2;
+  static int pomodoroTime = 1;
   int remainingSeconds = 0;
   Timer? countDownTimer;
   Duration pomodoroDuration = Duration(minutes: pomodoroTime);
 
   List<EventType> types = [];
+
+  int? _selectedChip = 0;
 
   @override
   void initState() {
@@ -27,7 +30,10 @@ class _HomeUIState extends State<HomeUI> {
   }
 
   Future getTypes() async {
-    types = await PomodoroDatabase.instance.readAllTypes();
+    var _types = await PomodoroDatabase.instance.readAllTypes();
+    setState(() {
+      types = _types;
+    });
   }
 
   void startTimer({bool reset = true}) {
@@ -59,6 +65,9 @@ class _HomeUIState extends State<HomeUI> {
         stopTimer(reset: false);
       } else {
         pomodoroDuration = Duration(seconds: seconds);
+        if (seconds == 0) {
+          HapticFeedback.vibrate();
+        }
       }
     });
   }
@@ -70,23 +79,29 @@ class _HomeUIState extends State<HomeUI> {
     final seconds = strDigits(pomodoroDuration.inSeconds.remainder(60));
     return Column(mainAxisAlignment: MainAxisAlignment.start, children: [
       SafeArea(
-        child: GestureDetector(
-          onTap: () {
-            const snackBar = SnackBar(content: Text('Tap'));
-            ScaffoldMessenger.of(context).showSnackBar(snackBar);
-          },
-          child: Wrap(
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              for (var item in types)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Chip(
-                    label: Text(item.name),
-                  ),
-                )
-            ],
-          ),
-        ),
+              const Text('Choose a type'),
+              const SizedBox(
+                height: 5,
+              ),
+              Wrap(
+                  spacing: 5,
+                  children: List<Widget>.generate(types.length, (int index) {
+                    return ChoiceChip(
+                      selectedColor: Colors.greenAccent[400],
+                      label: Text(types[index].name),
+                      selected: _selectedChip == index,
+                      onSelected: (bool selected) {
+                        setState(() {
+                          _selectedChip = selected ? index : 0;
+                        });
+                      },
+                    );
+                  }).toList()),
+            ]),
       ),
       const SizedBox(height: 100),
       SizedBox(
