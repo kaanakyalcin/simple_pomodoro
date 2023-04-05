@@ -5,6 +5,7 @@ import 'package:simple_pomodoro/core/db/pomodoro_db.dart';
 import 'package:simple_pomodoro/core/utils/button_widget.dart';
 import 'package:simple_pomodoro/core/utils/theme.dart';
 import 'package:simple_pomodoro/models/event_type.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeUI extends StatefulWidget {
   const HomeUI({super.key});
@@ -14,10 +15,12 @@ class HomeUI extends StatefulWidget {
 }
 
 class _HomeUIState extends State<HomeUI> {
-  static int pomodoroTime = 1;
+  int focusTime = 1;
+  int breakTime = 1;
+  int longBreakTime = 1;
   int remainingSeconds = 0;
   Timer? countDownTimer;
-  Duration pomodoroDuration = Duration(minutes: pomodoroTime);
+  late Duration pomodoroDuration = Duration(minutes: focusTime);
 
   List<EventType> types = [];
 
@@ -26,7 +29,27 @@ class _HomeUIState extends State<HomeUI> {
   @override
   void initState() {
     super.initState();
+    setTimes();
     getTypes();
+  }
+
+  @override
+  void dispose() {
+    if (countDownTimer != null && countDownTimer!.isActive) {
+      countDownTimer!.cancel();
+    }
+    super.dispose();
+  }
+
+  Future setTimes() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      focusTime = prefs.getInt("key-focus") ?? 1;
+      pomodoroDuration = Duration(minutes: focusTime);
+
+      breakTime = prefs.getInt("key-short-break") ?? 1;
+      longBreakTime = prefs.getInt("key-long-break") ?? 1;
+    });
   }
 
   Future getTypes() async {
@@ -54,7 +77,7 @@ class _HomeUIState extends State<HomeUI> {
   }
 
   void resetTimer() => setState(() {
-        pomodoroDuration = Duration(minutes: pomodoroTime);
+        pomodoroDuration = Duration(minutes: focusTime);
       });
 
   void setCountDown() {
@@ -111,7 +134,7 @@ class _HomeUIState extends State<HomeUI> {
           fit: StackFit.expand,
           children: [
             CircularProgressIndicator(
-              value: 1 - pomodoroDuration.inSeconds / (pomodoroTime * 60),
+              value: 1 - pomodoroDuration.inSeconds / (focusTime * 60),
               backgroundColor: CustomColor.logoBlue,
               strokeWidth: 24,
               valueColor: const AlwaysStoppedAnimation(Colors.yellow),

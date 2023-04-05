@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
+import 'package:simple_pomodoro/core/db/pomodoro_db.dart';
+import 'package:simple_pomodoro/core/utils/button_widget.dart';
+import 'package:simple_pomodoro/models/event_type.dart';
 
 class SettingsUI extends StatefulWidget {
   const SettingsUI({super.key});
@@ -14,6 +17,24 @@ class _SettingsUIState extends State<SettingsUI> {
   static const keyShortBreak = 'key-short-break';
   static const keyLongBreak = 'key-long-break';
   static const keyType = 'key-type';
+  List<EventType> types = [];
+
+  TextEditingController _textEditingController = TextEditingController();
+
+  int? _selectedChip = -1;
+
+  @override
+  void initState() {
+    super.initState();
+    getTypes();
+  }
+
+  Future getTypes() async {
+    var _types = await PomodoroDatabase.instance.readAllTypes();
+    setState(() {
+      types = _types;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,14 +42,129 @@ class _SettingsUIState extends State<SettingsUI> {
         child: ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        SettingsGroup(title: 'UI', children: <Widget>[buildDarkMode()]),
+        SettingsGroup(title: 'DARK MODE', children: <Widget>[buildDarkMode()]),
         SettingsGroup(title: 'GENERAL', children: <Widget>[
           buildFocusTime(),
           buildShortBreakTime(),
           buildLongBreakTime()
-        ])
+        ]),
+        SettingsGroup(title: 'TYPES', children: <Widget>[buildTypes()]),
       ],
     ));
+  }
+
+  Widget buildTypes() {
+    return Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+      Wrap(
+          spacing: 5,
+          children: List<Widget>.generate(types.length, (int index) {
+            return ChoiceChip(
+              selectedColor: Colors.greenAccent[400],
+              label: Text(types[index].name),
+              selected: _selectedChip == index,
+              onSelected: (bool selected) {
+                if (types[index].deletable) {
+                  _deleteDialogBuilder(context, types[index].id!);
+                }
+                setState(() {
+                  _selectedChip = selected ? index : -1;
+                });
+              },
+            );
+          }).toList()),
+      const SizedBox(
+        height: 10,
+      ),
+      ButtonWidget(
+          text: 'Add Type',
+          onClicked: () {
+            _insertDialogBuilder(context);
+          })
+    ]);
+  }
+
+  Future<void> _insertDialogBuilder(BuildContext context) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Type'),
+          content: TextFormField(
+            controller: _textEditingController,
+            maxLength: 10,
+            decoration: const InputDecoration(
+              suffixIcon: Icon(
+                Icons.check_circle,
+              ),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF642ef3)),
+              ),
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              style: TextButton.styleFrom(
+                textStyle: Theme.of(context).textTheme.labelLarge,
+              ),
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                textStyle: Theme.of(context).textTheme.labelLarge,
+              ),
+              child: const Text('Add'),
+              onPressed: () async {
+                await PomodoroDatabase.instance
+                    .addNewType(_textEditingController.text);
+                setState(() {
+                  getTypes();
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteDialogBuilder(BuildContext context, int id) {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Type'),
+          content: const Text('Are you sure?'),
+          actions: <Widget>[
+            TextButton(
+              style: TextButton.styleFrom(
+                textStyle: Theme.of(context).textTheme.labelLarge,
+              ),
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                textStyle: Theme.of(context).textTheme.labelLarge,
+              ),
+              child: const Text('Delete'),
+              onPressed: () async {
+                await PomodoroDatabase.instance.deleteType(id);
+                setState(() {
+                  getTypes();
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget buildFocusTime() => DropDownSettingsTile(
@@ -36,6 +172,7 @@ class _SettingsUIState extends State<SettingsUI> {
         title: 'Focus Time',
         selected: 20,
         values: const <int, String>{
+          1: '1 min',
           10: '10 min',
           20: '20 min',
           30: '30 min',

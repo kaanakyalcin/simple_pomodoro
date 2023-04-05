@@ -61,4 +61,18 @@ class PomodoroDatabase {
 
     return result.map((e) => EventType.fromJson(e)).toList();
   }
+
+  Future<void> addNewType(String name) async {
+    final db = await instance.database;
+
+    await db.rawInsert(
+        '''INSERT INTO $tableTypes(${EventTypeFields.name}, ${EventTypeFields.deletable}) VALUES ('$name', 1)''');
+  }
+
+  Future<void> deleteType(int id) async {
+    final db = await instance.database;
+
+    await db.rawDelete(
+        '''DELETE FROM $tableTypes WHERE ${EventTypeFields.id} = $id AND ${EventTypeFields.deletable} = 1''');
+  }
 }
