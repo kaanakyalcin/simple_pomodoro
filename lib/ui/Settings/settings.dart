@@ -16,7 +16,6 @@ class _SettingsUIState extends State<SettingsUI> {
   static const keyFocus = 'key-focus';
   static const keyShortBreak = 'key-short-break';
   static const keyLongBreak = 'key-long-break';
-  static const keyType = 'key-type';
   List<EventType> types = [];
 
   TextEditingController _textEditingController = TextEditingController();
@@ -225,11 +224,5 @@ class _SettingsUIState extends State<SettingsUI> {
           color: Color(0xFF642ef3),
         ),
         onChange: (isDarkMode) {},
-      );
-
-  Widget buildType() => TextInputSettingsTile(
-        settingKey: keyType,
-        title: 'Add Type',
-        obscureText: false,
       );
 }
