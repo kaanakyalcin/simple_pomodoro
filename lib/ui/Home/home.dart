@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:simple_pomodoro/core/db/pomodoro_db.dart';
 import 'package:simple_pomodoro/core/utils/button_widget.dart';
 import 'package:simple_pomodoro/core/utils/theme.dart';
+import 'package:simple_pomodoro/models/break_type.dart';
 import 'package:simple_pomodoro/models/event_type.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,14 +24,17 @@ class _HomeUIState extends State<HomeUI> {
   late Duration pomodoroDuration = Duration(minutes: focusTime);
 
   List<EventType> types = [];
+  List<BreakType> breakTypes = [];
 
   int? _selectedChip = 0;
+  int? _selectedBreakChip = 0;
 
   @override
   void initState() {
     super.initState();
     setTimes();
     getTypes();
+    getBreakTypes();
   }
 
   @override
@@ -56,6 +60,13 @@ class _HomeUIState extends State<HomeUI> {
     var _types = await PomodoroDatabase.instance.readAllTypes();
     setState(() {
       types = _types;
+    });
+  }
+
+  Future getBreakTypes() async {
+    var _types = await PomodoroDatabase.instance.readAllBreakTypes();
+    setState(() {
+      breakTypes = _types;
     });
   }
 
@@ -89,7 +100,10 @@ class _HomeUIState extends State<HomeUI> {
       } else {
         pomodoroDuration = Duration(seconds: seconds);
         if (seconds == 0) {
-          HapticFeedback.vibrate();
+          HapticFeedback.heavyImpact();
+          countDownTimer!.cancel();
+          pomodoroDuration = Duration(minutes: focusTime);
+          PomodoroDatabase.instance.addNewEvent(_selectedChip!, focusTime, 1);
         }
       }
     });
@@ -100,73 +114,92 @@ class _HomeUIState extends State<HomeUI> {
     String strDigits(int n) => n.toString().padLeft(2, '0');
     final minutes = strDigits(pomodoroDuration.inMinutes);
     final seconds = strDigits(pomodoroDuration.inSeconds.remainder(60));
-    return Column(mainAxisAlignment: MainAxisAlignment.start, children: [
-      SafeArea(
-        child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const Text('Choose a type'),
-              const SizedBox(
-                height: 5,
-              ),
-              Wrap(
-                  spacing: 5,
-                  children: List<Widget>.generate(types.length, (int index) {
-                    return ChoiceChip(
-                      selectedColor: Colors.greenAccent[400],
-                      label: Text(types[index].name),
-                      selected: _selectedChip == index,
-                      onSelected: (bool selected) {
-                        setState(() {
-                          _selectedChip = selected ? index : 0;
-                        });
-                      },
-                    );
-                  }).toList()),
-            ]),
-      ),
-      const SizedBox(height: 100),
-      SizedBox(
-        width: 300,
-        height: 300,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            CircularProgressIndicator(
-              value: 1 - pomodoroDuration.inSeconds / (focusTime * 60),
-              backgroundColor: CustomColor.logoBlue,
-              strokeWidth: 24,
-              valueColor: const AlwaysStoppedAnimation(Colors.yellow),
-            ),
-            Center(
-                child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+    return SingleChildScrollView(
+      child: Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+        SafeArea(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Text(
-                  minutes,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 80,
-                      color: CustomColor.fontBlack),
+                const Text('Choose a type'),
+                const SizedBox(
+                  height: 5,
                 ),
-                Text(
-                  seconds,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      color: CustomColor.fontBlack),
-                ),
-              ],
-            )),
-          ],
+                Wrap(
+                    spacing: 5,
+                    children: List<Widget>.generate(types.length, (int index) {
+                      return ChoiceChip(
+                        selectedColor: Colors.greenAccent[400],
+                        label: Text(types[index].name),
+                        selected: _selectedChip == index,
+                        onSelected: (bool selected) {
+                          setState(() {
+                            _selectedChip = selected ? index : 0;
+                          });
+                        },
+                      );
+                    }).toList()),
+              ]),
         ),
-      ),
-      const SizedBox(
-        height: 50,
-      ),
-      buildButtons()
-    ]);
+        const SizedBox(height: 100),
+        SizedBox(
+          width: 300,
+          height: 300,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CircularProgressIndicator(
+                value: 1 - pomodoroDuration.inSeconds / (focusTime * 60),
+                backgroundColor: CustomColor.logoBlue,
+                strokeWidth: 24,
+                valueColor: const AlwaysStoppedAnimation(Colors.yellow),
+              ),
+              Center(
+                  child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    minutes,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 80,
+                        color: CustomColor.fontBlack),
+                  ),
+                  Text(
+                    seconds,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        color: CustomColor.fontBlack),
+                  ),
+                ],
+              )),
+            ],
+          ),
+        ),
+        const SizedBox(
+          height: 50,
+        ),
+        Wrap(
+            spacing: 5,
+            children: List<Widget>.generate(breakTypes.length, (int index) {
+              return ChoiceChip(
+                selectedColor: Colors.greenAccent[400],
+                label: Text(breakTypes[index].name),
+                selected: _selectedBreakChip == index,
+                onSelected: (bool selected) {
+                  setState(() {
+                    _selectedBreakChip = selected ? index : 0;
+                  });
+                },
+              );
+            }).toList()),
+        const SizedBox(
+          height: 25,
+        ),
+        buildButtons(),
+      ]),
+    );
   }
 
   Widget buildButtons() {

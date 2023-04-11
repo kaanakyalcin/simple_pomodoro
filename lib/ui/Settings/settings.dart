@@ -16,6 +16,8 @@ class _SettingsUIState extends State<SettingsUI> {
   static const keyFocus = 'key-focus';
   static const keyShortBreak = 'key-short-break';
   static const keyLongBreak = 'key-long-break';
+  static const keyAlarmType = 'key-alarm-type';
+  static const keyVibrationType = 'key-vibration-type';
   List<EventType> types = [];
 
   TextEditingController _textEditingController = TextEditingController();
@@ -26,6 +28,11 @@ class _SettingsUIState extends State<SettingsUI> {
   void initState() {
     super.initState();
     getTypes();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   Future getTypes() async {
@@ -47,6 +54,9 @@ class _SettingsUIState extends State<SettingsUI> {
           buildShortBreakTime(),
           buildLongBreakTime()
         ]),
+        SettingsGroup(
+            title: 'Notification',
+            children: <Widget>[buildAlarmType(), buildVibrationType()]),
         SettingsGroup(title: 'TYPES', children: <Widget>[buildTypes()]),
       ],
     ));
@@ -224,5 +234,21 @@ class _SettingsUIState extends State<SettingsUI> {
           color: Color(0xFF642ef3),
         ),
         onChange: (isDarkMode) {},
+      );
+
+  Widget buildAlarmType() => DropDownSettingsTile(
+        settingKey: keyAlarmType,
+        title: 'Alarm Type',
+        selected: 1,
+        values: const <int, String>{1: 'Off', 2: '2', 3: '3'},
+        onChange: (alarmType) {},
+      );
+
+  Widget buildVibrationType() => DropDownSettingsTile(
+        settingKey: keyVibrationType,
+        title: 'Vibration Type',
+        selected: 1,
+        values: const <int, String>{1: 'Off', 2: '2', 3: '3'},
+        onChange: (vibrationType) {},
       );
 }

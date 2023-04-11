@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_screens/flutter_settings_screens.dart';
 import 'package:simple_pomodoro/ui/Home/home.dart';
+import 'package:simple_pomodoro/ui/Report/report.dart';
 import 'package:simple_pomodoro/ui/Settings/settings.dart';
 import 'core/utils/theme.dart';
 
@@ -52,10 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   static const List<Widget> _pages = <Widget>[
     HomeUI(),
-    Icon(
-      Icons.camera,
-      size: 150,
-    ),
+    ReportUI(),
     SettingsUI()
   ];
 
@@ -66,7 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: _pages.elementAt(_selectedIndex),
         ),
         bottomNavigationBar: Padding(
-          padding: EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.only(bottom: 10),
           child: SafeArea(
               child: Container(
                   padding: const EdgeInsets.fromLTRB(12, 3, 12, 3),
