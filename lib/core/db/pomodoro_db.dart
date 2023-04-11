@@ -1,4 +1,6 @@
 import 'package:path/path.dart';
+import 'package:simple_pomodoro/models/break_type.dart';
+import 'package:simple_pomodoro/models/event.dart';
 import 'package:simple_pomodoro/models/event_type.dart';
 import 'package:sqflite/sqflite.dart';
 import 'dart:async';
@@ -37,6 +39,22 @@ class PomodoroDatabase {
 
     await db.execute(sql);
 
+    sql = '''CREATE TABLE $tableEvents (
+      ${EventFields.id} $idType,
+      ${EventFields.typeId} $integerType,
+      ${EventFields.time} $integerType,
+      ${EventFields.breakId} $integerType
+    )''';
+
+    await db.execute(sql);
+
+    sql = '''CREATE TABLE $tableBreak (
+      ${BreakTypeFields.id} $idType,
+      ${BreakTypeFields.name} $textType
+    )''';
+
+    await db.execute(sql);
+
     await db.rawInsert(
         '''INSERT INTO $tableTypes(${EventTypeFields.name}, ${EventTypeFields.deletable}) VALUES ('Other', 0)''');
 
@@ -48,6 +66,15 @@ class PomodoroDatabase {
 
     await db.rawInsert(
         '''INSERT INTO $tableTypes(${EventTypeFields.name}, ${EventTypeFields.deletable}) VALUES ('Sport', 0)''');
+
+    await db.rawInsert(
+        '''INSERT INTO $tableBreak(${BreakTypeFields.name}) VALUES ('Focus')''');
+
+    await db.rawInsert(
+        '''INSERT INTO $tableBreak(${BreakTypeFields.name}) VALUES ('Short Break')''');
+
+    await db.rawInsert(
+        '''INSERT INTO $tableBreak(${BreakTypeFields.name}) VALUES ('Long Break')''');
   }
 
   Future close() async {
@@ -62,11 +89,32 @@ class PomodoroDatabase {
     return result.map((e) => EventType.fromJson(e)).toList();
   }
 
+  Future<List<BreakType>> readAllBreakTypes() async {
+    final db = await instance.database;
+    final result = await db.query(tableBreak);
+
+    return result.map((e) => BreakType.fromJson(e)).toList();
+  }
+
+  Future<List<Event>> readAllEvents() async {
+    final db = await instance.database;
+    final result = await db.query(tableEvents);
+
+    return result.map((e) => Event.fromJson(e)).toList();
+  }
+
   Future<void> addNewType(String name) async {
     final db = await instance.database;
 
     await db.rawInsert(
         '''INSERT INTO $tableTypes(${EventTypeFields.name}, ${EventTypeFields.deletable}) VALUES ('$name', 1)''');
+  }
+
+  Future<void> addNewEvent(int typeId, int time, int breakId) async {
+    final db = await instance.database;
+
+    await db.rawInsert(
+        '''INSERT INTO $tableEvents(${EventFields.typeId}, ${EventFields.time}, ${EventFields.breakId}) VALUES ($typeId, $time, $breakId)''');
   }
 
   Future<void> deleteType(int id) async {
